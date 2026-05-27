@@ -50,8 +50,8 @@ type_check = [
 ]
 
 [project.urls]
-Changelog = "https://github.com/Hochfrequenz/efoli/releases"
-Homepage = "https://github.com/Hochfrequenz/efoli"
+Changelog = "https://github.com/Hochfrequenz/efoli.py/releases"
+Homepage = "https://github.com/Hochfrequenz/efoli.py"
 
 [tool.black]
 line-length = 120

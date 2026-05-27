@@ -24,6 +24,7 @@
 
 It's not much, but we need it at many places.
 This is why we use this package as a central place to define these formats and versions.
+There is a TypeScript clone of this package: [efoli.ts](https://github.com/Hochfrequenz/efoli.ts)
 
 ## Installation
 ```bash

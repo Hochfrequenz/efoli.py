@@ -42,7 +42,7 @@ packaging = [
     "twine==6.2.0"
 ]
 tests = [
-    "pytest==8.4.2"
+    "pytest==9.1.1"
 ]
 type_check = [
     "mypy==2.1.0",

@@ -33,7 +33,7 @@ def test_illegal_pruefis(illegal_pruefi: Optional[str]) -> None:
     :return:
     """
     with pytest.raises(ValueError):
-        get_format_of_pruefidentifikator(illegal_pruefi)  # type:ignore[arg-type] # ok, because this raises an error
+        get_format_of_pruefidentifikator(illegal_pruefi)  # type: ignore[arg-type] # ok, because this raises an error
 
 
 @pytest.mark.parametrize("pruefi", [pytest.param("10000")])

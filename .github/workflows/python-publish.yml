@@ -41,9 +41,10 @@ jobs:
           uv run codespell --ignore-words=domain-specific-terms.txt src
           uv run codespell --ignore-words=domain-specific-terms.txt README.md
       - name: Run Coverage
+        run: uv sync --group coverage
+      - name: Record Coverage
         working-directory: unittests
         run: |
-          uv sync --group coverage
           uv run coverage run -m pytest
           uv run coverage report --fail-under 95 --omit .venv/*,unittests/*
 

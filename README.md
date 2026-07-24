@@ -33,7 +33,7 @@ pip install efoli
 
 ## Setup for Local Development
 Follow the instructions from our [template repository](https://github.com/Hochfrequenz/python_template_repository?tab=readme-ov-file#how-to-use-this-repository-on-your-machine).
-tl;dr: `tox`.
+tl;dr: `uv sync --group dev`.
 
 ## Contribute
 You are very welcome to contribute to this template repository by opening a pull request against the main branch.

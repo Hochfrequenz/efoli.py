@@ -23,35 +23,46 @@ classifiers = [
 dependencies = ["pytz"]     # add all the dependencies here
 dynamic = ["readme", "version"]
 
-[project.optional-dependencies]
+[project.urls]
+Changelog = "https://github.com/Hochfrequenz/efoli.py/releases"
+Homepage = "https://github.com/Hochfrequenz/efoli.py"
+
+[dependency-groups]
 coverage = [
-    "coverage==7.15.1"
+    "coverage==7.15.1; python_version >= '3.10'",
+    {include-group = "tests"}
 ]
 formatting = [
-    "black==26.5.1",
-    "isort==8.0.1"
+    "black==26.5.1; python_version >= '3.10'",
+    "isort==8.0.1; python_version >= '3.10'"
 ]
 linting = [
-    "pylint==4.0.6"
+    "pylint==4.0.6; python_version >= '3.10'",
+    {include-group = "tests"}
 ]
-spellcheck = [
+spell_check = [
     "codespell==2.4.2"
-]
-packaging = [
-    "build==1.5.1",
-    "twine==6.2.0"
 ]
 tests = [
     "pytest==8.4.2"
 ]
 type_check = [
-    "mypy==2.2.0",
-    "types-pytz==2026.2.0.20260518"
+    "mypy==2.2.0; python_version >= '3.10'",
+    "types-pytz==2026.2.0.20260518; python_version >= '3.10'",
+    {include-group = "tests"}
+]
+dev = [
+    {include-group = "tests"},
+    {include-group = "linting"},
+    {include-group = "type_check"},
+    {include-group = "coverage"},
+    {include-group = "spell_check"},
+    {include-group = "formatting"},
+    "pre-commit"
 ]
 
-[project.urls]
-Changelog = "https://github.com/Hochfrequenz/efoli.py/releases"
-Homepage = "https://github.com/Hochfrequenz/efoli.py"
+[tool.uv]
+default-groups = []
 
 [tool.black]
 line-length = 120

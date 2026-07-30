@@ -28,8 +28,7 @@ jobs:
       - name: Run Linting
         run: |
           uv sync --group linting
-          uv run pylint efoli
-          uv run pylint unittests --rcfile=unittests/.pylintrc
+          uv run ruff check src/efoli unittests
       - name: Run Type Check
         run: |
           uv sync --group type_check

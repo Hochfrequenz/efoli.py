@@ -6,7 +6,7 @@
 ![Unittests status badge](https://github.com/Hochfrequenz/efoli/workflows/Unittests/badge.svg)
 ![Coverage status badge](https://github.com/Hochfrequenz/efoli/workflows/Coverage/badge.svg)
 ![Linting status badge](https://github.com/Hochfrequenz/efoli/workflows/Linting/badge.svg)
-![Black status badge](https://github.com/Hochfrequenz/efoli/workflows/Formatting/badge.svg)
+![Formatting status badge](https://github.com/Hochfrequenz/efoli/workflows/Formatting/badge.svg)
 
 `efoli` is a Python package, that contains
 - an Enum `EdifactFormat` that models EDIFACT formats used by German utilities like, e.g.

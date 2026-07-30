@@ -33,8 +33,7 @@ coverage = [
     {include-group = "tests"}
 ]
 linting = [
-    "ruff==0.16.0; python_version >= '3.10'",
-    {include-group = "tests"}
+    "ruff==0.16.0; python_version >= '3.10'"
 ]
 spell_check = [
     "codespell==2.4.3"

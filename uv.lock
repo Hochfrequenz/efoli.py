@@ -225,7 +225,6 @@ dev = [
     { name = "types-pytz", marker = "python_full_version >= '3.10'" },
 ]
 linting = [
-    { name = "pytest" },
     { name = "ruff", marker = "python_full_version >= '3.10'" },
 ]
 spell-check = [
@@ -257,10 +256,7 @@ dev = [
     { name = "ruff", marker = "python_full_version >= '3.10'", specifier = "==0.16.0" },
     { name = "types-pytz", marker = "python_full_version >= '3.10'", specifier = "==2026.3.1.20260727" },
 ]
-linting = [
-    { name = "pytest", specifier = "==8.4.2" },
-    { name = "ruff", marker = "python_full_version >= '3.10'", specifier = "==0.16.0" },
-]
+linting = [{ name = "ruff", marker = "python_full_version >= '3.10'", specifier = "==0.16.0" }]
 spell-check = [{ name = "codespell", specifier = "==2.4.3" }]
 tests = [{ name = "pytest", specifier = "==8.4.2" }]
 type-check = [

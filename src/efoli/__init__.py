@@ -12,9 +12,9 @@ from .edifact_format_version import (
 
 __all__ = [
     "EdifactFormat",
-    "get_format_of_pruefidentifikator",
     "EdifactFormatVersion",
     "get_current_edifact_format_version",
     "get_edifact_format_version",
     "get_edifact_format_version_valid_from",
+    "get_format_of_pruefidentifikator",
 ]

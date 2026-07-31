@@ -22,8 +22,7 @@ jobs:
       - name: Run Linting
         if: matrix.linter-env == 'linting'
         run: |
-          uv run pylint efoli
-          uv run pylint unittests --rcfile=unittests/.pylintrc
+          uv run ruff check src/efoli unittests
       - name: Run Type Check
         if: matrix.linter-env == 'type_check'
         run: |

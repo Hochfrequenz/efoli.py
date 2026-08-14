@@ -36,20 +36,27 @@ class EdifactFormatVersion(StrEnum):
 
 
 # Maps the exclusive upper threshold (UTC) to the version valid until that threshold.
-# When adding a new FV, append a new entry here; the newest version is the one that is intentionally
+# When adding a new FV, add a new entry here; the newest version is the one that is intentionally
 # absent from this list, because it has no upper threshold (yet).
-_format_version_thresholds: list[tuple[datetime.datetime, EdifactFormatVersion]] = [
-    (datetime.datetime(2021, 9, 30, 22, 0, 0, 0, tzinfo=_utc), EdifactFormatVersion.FV2104),
-    (datetime.datetime(2022, 9, 30, 22, 0, 0, 0, tzinfo=_utc), EdifactFormatVersion.FV2110),
-    (datetime.datetime(2023, 3, 31, 22, 0, 0, 0, tzinfo=_utc), EdifactFormatVersion.FV2210),
-    (datetime.datetime(2023, 9, 30, 22, 0, 0, 0, tzinfo=_utc), EdifactFormatVersion.FV2304),
-    (datetime.datetime(2024, 4, 2, 22, 0, 0, 0, tzinfo=_utc), EdifactFormatVersion.FV2310),
-    (datetime.datetime(2024, 9, 30, 22, 0, 0, 0, tzinfo=_utc), EdifactFormatVersion.FV2404),
-    (datetime.datetime(2025, 6, 5, 22, 0, 0, 0, tzinfo=_utc), EdifactFormatVersion.FV2410),
-    (datetime.datetime(2025, 9, 30, 22, 0, 0, 0, tzinfo=_utc), EdifactFormatVersion.FV2504),
-    (datetime.datetime(2026, 3, 31, 22, 0, 0, 0, tzinfo=_utc), EdifactFormatVersion.FV2510),
-    (datetime.datetime(2026, 9, 30, 22, 0, 0, 0, tzinfo=_utc), EdifactFormatVersion.FV2604),
-]
+# Sorted once, here, so that every reader can rely on chronological order: get_edifact_format_version
+# returns the first threshold the key date falls below, which is only the *closest* one if the list is
+# ordered. Sorting at the single point of definition means a new entry written in the wrong place
+# cannot produce wrong format versions.
+_format_version_thresholds: list[tuple[datetime.datetime, EdifactFormatVersion]] = sorted(
+    [
+        (datetime.datetime(2021, 9, 30, 22, 0, 0, 0, tzinfo=_utc), EdifactFormatVersion.FV2104),
+        (datetime.datetime(2022, 9, 30, 22, 0, 0, 0, tzinfo=_utc), EdifactFormatVersion.FV2110),
+        (datetime.datetime(2023, 3, 31, 22, 0, 0, 0, tzinfo=_utc), EdifactFormatVersion.FV2210),
+        (datetime.datetime(2023, 9, 30, 22, 0, 0, 0, tzinfo=_utc), EdifactFormatVersion.FV2304),
+        (datetime.datetime(2024, 4, 2, 22, 0, 0, 0, tzinfo=_utc), EdifactFormatVersion.FV2310),
+        (datetime.datetime(2024, 9, 30, 22, 0, 0, 0, tzinfo=_utc), EdifactFormatVersion.FV2404),
+        (datetime.datetime(2025, 6, 5, 22, 0, 0, 0, tzinfo=_utc), EdifactFormatVersion.FV2410),
+        (datetime.datetime(2025, 9, 30, 22, 0, 0, 0, tzinfo=_utc), EdifactFormatVersion.FV2504),
+        (datetime.datetime(2026, 3, 31, 22, 0, 0, 0, tzinfo=_utc), EdifactFormatVersion.FV2510),
+        (datetime.datetime(2026, 9, 30, 22, 0, 0, 0, tzinfo=_utc), EdifactFormatVersion.FV2604),
+    ],
+    key=lambda threshold: threshold[0],
+)
 
 
 # The newest format version: the only member without an upper threshold in
@@ -67,19 +74,18 @@ def _build_valid_from_map() -> dict[EdifactFormatVersion, datetime.date]:
 
     Each threshold is the exclusive upper bound of a version — meaning the NEXT version
     starts at that threshold. Converting to Europe/Berlin gives the local inclusive start date.
+    _format_version_thresholds is sorted at its point of definition, so no local sorting here.
     """
-    # Ensure thresholds are sorted by datetime (guard against accidental reordering)
-    sorted_thresholds = sorted(_format_version_thresholds, key=lambda t: t[0])
     result: dict[EdifactFormatVersion, datetime.date] = {}
-    versions_in_order = [v for _, v in sorted_thresholds]
+    versions_in_order = [version for _, version in _format_version_thresholds]
     # For each threshold at index i, the version at index i+1 starts at that threshold
-    for i, (threshold_dt, _) in enumerate(sorted_thresholds):
+    for i, (threshold_dt, _) in enumerate(_format_version_thresholds):
         if i + 1 < len(versions_in_order):
             next_version = versions_in_order[i + 1]
             result[next_version] = threshold_dt.astimezone(_berlin).date()
     # The newest version has no upper threshold of its own, so it is not covered by the loop above.
     # It starts where the latest bounded version ends.
-    result[_latest_format_version] = sorted_thresholds[-1][0].astimezone(_berlin).date()
+    result[_latest_format_version] = _format_version_thresholds[-1][0].astimezone(_berlin).date()
     return result
 
 
@@ -132,5 +138,6 @@ def get_current_edifact_format_version() -> EdifactFormatVersion:
     """
     returns the edifact_format_version that is valid as of now
     """
-    tz_aware_now = datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc)
-    return get_edifact_format_version(tz_aware_now)
+    # datetime.datetime.now(_utc) instead of utcnow(): the latter returns a naive datetime and is
+    # deprecated since 3.12. datetime.UTC is not used because efoli supports Python 3.9.
+    return get_edifact_format_version(datetime.datetime.now(_utc))

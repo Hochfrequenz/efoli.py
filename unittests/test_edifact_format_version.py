@@ -1,4 +1,5 @@
 from datetime import date, datetime, timezone
+from unittest.mock import patch
 
 import pytest
 
@@ -8,6 +9,7 @@ from efoli import (
     get_edifact_format_version,
     get_edifact_format_version_valid_from,
 )
+from efoli.edifact_format_version import _format_version_thresholds, _latest_format_version
 
 
 @pytest.mark.parametrize(
@@ -47,14 +49,37 @@ from efoli import (
         pytest.param(datetime(2026, 3, 31, 21, 59, 59, tzinfo=timezone.utc), EdifactFormatVersion.FV2510),
         pytest.param(datetime(2026, 3, 31, 22, 0, 0, tzinfo=timezone.utc), EdifactFormatVersion.FV2604),
         pytest.param(datetime(2026, 9, 30, 22, 0, 0, tzinfo=timezone.utc), EdifactFormatVersion.FV2610),
-        pytest.param(
-            datetime(2050, 10, 1, 0, 0, 0, tzinfo=timezone.utc), EdifactFormatVersion.FV2610
-        ),  # or what ever is the latest version
     ],
 )
 def test_format_version_from_keydate(key_date: datetime, expected_result: EdifactFormatVersion) -> None:
     actual = get_edifact_format_version(key_date)
     assert actual == expected_result
+
+
+def test_key_date_beyond_last_threshold_returns_newest_format_version() -> None:
+    """Dates beyond the last known threshold saturate to the newest format version.
+
+    Deliberately expressed via list(EdifactFormatVersion)[-1] instead of a literal: with a literal
+    this assertion keeps passing after a new format version is added, while
+    get_edifact_format_version would then wrongly return the second newest version for all
+    future dates.
+    """
+    newest_format_version = list(EdifactFormatVersion)[-1]
+    assert get_edifact_format_version(datetime(2050, 10, 1, 0, 0, 0, tzinfo=timezone.utc)) == newest_format_version
+    assert get_edifact_format_version(date(2050, 10, 1)) == newest_format_version
+
+
+def test_key_date_beyond_last_threshold_reads_the_derived_value() -> None:
+    """get_edifact_format_version has to *read* _latest_format_version, not repeat its current value.
+
+    Without this test, replacing the return value with the literal that _latest_format_version happens
+    to equal today passes every other test, and the bug only surfaces one format version later - which
+    is exactly the failure mode this module is supposed to prevent.
+    """
+    not_the_newest_version = next(iter(EdifactFormatVersion))
+    far_future = datetime(2050, 10, 1, 0, 0, 0, tzinfo=timezone.utc)
+    with patch("efoli.edifact_format_version._latest_format_version", not_the_newest_version):
+        assert get_edifact_format_version(far_future) is not_the_newest_version
 
 
 def test_get_current_format_version() -> None:
@@ -89,6 +114,35 @@ def test_format_version_valid_from(version: EdifactFormatVersion, expected_date:
 def test_format_version_valid_from_unknown_raises() -> None:
     with pytest.raises(KeyError):
         get_edifact_format_version_valid_from(EdifactFormatVersion.FV2104)
+
+
+def test_format_versions_are_declared_in_chronological_order() -> None:
+    """The enum's declaration order has to match the chronological order.
+
+    Both _latest_format_version (the last member) and _build_valid_from_map rely on it.
+    """
+    valid_from_dates = []
+    for fv in list(EdifactFormatVersion)[1:]:  # FV2104 has no known start date
+        try:
+            valid_from_dates.append(get_edifact_format_version_valid_from(fv))
+        except KeyError:
+            # a missing start date is reported by test_all_format_versions_except_first_have_valid_from;
+            # swallowing it here keeps this test's failure about the *order*, as its name promises
+            continue
+    assert valid_from_dates == sorted(valid_from_dates)
+    assert len(set(valid_from_dates)) == len(valid_from_dates), "two format versions share a start date"
+
+
+def test_latest_format_version_is_the_newest_enum_member() -> None:
+    """The newest format version must be the only member without an upper threshold.
+
+    This is the invariant that lets _latest_format_version simply be the last enum member. It fails
+    if a format version is added to the enum without giving its predecessor a threshold, or if a
+    threshold is added for the newest version without adding its successor to the enum.
+    """
+    bounded_versions = {version for _, version in _format_version_thresholds}
+    assert _latest_format_version not in bounded_versions
+    assert bounded_versions == set(EdifactFormatVersion) - {_latest_format_version}
 
 
 def test_all_format_versions_except_first_have_valid_from() -> None:

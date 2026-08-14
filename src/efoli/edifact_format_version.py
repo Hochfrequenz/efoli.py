@@ -27,14 +27,17 @@ class EdifactFormatVersion(StrEnum):
     FV2510 = "FV2510"  #: valid from 2025-10-01 onwards
     FV2604 = "FV2604"  #: valid from 2026-04-01 onwards
     FV2610 = "FV2610"  #: valid from 2026-10-01 onwards
-    # whenever you add another value here, please also make sure to add its key date to get_edifact_format_version below
+    # Whenever you add another value here, add the upper threshold of its *predecessor* to
+    # _format_version_thresholds below. The values have to stay in chronological order;
+    # test_format_versions_are_declared_in_chronological_order guards that.
 
     def __str__(self) -> str:
         return self.value
 
 
 # Maps the exclusive upper threshold (UTC) to the version valid until that threshold.
-# When adding a new FV, append a new entry here AND update the fallback in get_edifact_format_version.
+# When adding a new FV, append a new entry here; the newest version is the one that is intentionally
+# absent from this list, because it has no upper threshold (yet).
 _format_version_thresholds: list[tuple[datetime.datetime, EdifactFormatVersion]] = [
     (datetime.datetime(2021, 9, 30, 22, 0, 0, 0, tzinfo=_utc), EdifactFormatVersion.FV2104),
     (datetime.datetime(2022, 9, 30, 22, 0, 0, 0, tzinfo=_utc), EdifactFormatVersion.FV2110),
@@ -47,6 +50,16 @@ _format_version_thresholds: list[tuple[datetime.datetime, EdifactFormatVersion]]
     (datetime.datetime(2026, 3, 31, 22, 0, 0, 0, tzinfo=_utc), EdifactFormatVersion.FV2510),
     (datetime.datetime(2026, 9, 30, 22, 0, 0, 0, tzinfo=_utc), EdifactFormatVersion.FV2604),
 ]
+
+
+# The newest format version: the only member without an upper threshold in
+# _format_version_thresholds, because nobody knows yet when it will be superseded. Derived from the
+# enum instead of hardcoded, so that adding a format version stays a single edit. A hardcoded value
+# silently makes get_edifact_format_version return the *previous* version for every date beyond the
+# last threshold. test_latest_format_version_is_the_newest_enum_member pins the relationship between
+# the enum and the thresholds list, so a mismatch fails one named test instead of breaking `import
+# efoli` for everyone.
+_latest_format_version = list(EdifactFormatVersion)[-1]
 
 
 def _build_valid_from_map() -> dict[EdifactFormatVersion, datetime.date]:
@@ -64,15 +77,9 @@ def _build_valid_from_map() -> dict[EdifactFormatVersion, datetime.date]:
         if i + 1 < len(versions_in_order):
             next_version = versions_in_order[i + 1]
             result[next_version] = threshold_dt.astimezone(_berlin).date()
-    # Last version in thresholds list: its end threshold is the start of the fallback version
-    last_threshold = sorted_thresholds[-1][0]
-    last_version_in_thresholds = sorted_thresholds[-1][1]
-    # The fallback version is the one AFTER the last in the thresholds list
-    all_fvs = list(EdifactFormatVersion)
-    last_idx = all_fvs.index(last_version_in_thresholds)
-    if last_idx + 1 < len(all_fvs):
-        fallback_version = all_fvs[last_idx + 1]
-        result[fallback_version] = last_threshold.astimezone(_berlin).date()
+    # The newest version has no upper threshold of its own, so it is not covered by the loop above.
+    # It starts where the latest bounded version ends.
+    result[_latest_format_version] = sorted_thresholds[-1][0].astimezone(_berlin).date()
     return result
 
 
@@ -103,6 +110,11 @@ def get_edifact_format_version(key_date: Union[datetime.datetime, datetime.date]
     against a series of predefined datetime thresholds. Each threshold corresponds to a specific
     version of the Edifact format.
 
+    Note that any key date beyond the last known threshold returns the newest format version this
+    library knows about, because the date at which that version will be superseded is not known yet.
+    This means an outdated efoli release reports its own newest version for key dates that actually
+    belong to a format version released after it. Update efoli to resolve such dates correctly.
+
     :param key_date: The date for which the Edifact format version is to be determined.
     :return: The Edifact format version valid for the specified key date.
     """
@@ -113,7 +125,7 @@ def get_edifact_format_version(key_date: Union[datetime.datetime, datetime.date]
         if key_date < threshold_date:
             return version
 
-    return EdifactFormatVersion.FV2610
+    return _latest_format_version
 
 
 def get_current_edifact_format_version() -> EdifactFormatVersion:

@@ -1,3 +1,4 @@
+import warnings
 from datetime import date, datetime, timezone
 from unittest.mock import patch
 
@@ -87,6 +88,20 @@ def test_get_current_format_version() -> None:
     assert isinstance(actual, EdifactFormatVersion) is True
 
 
+def test_get_current_format_version_is_free_of_deprecation_warnings() -> None:
+    """pins the timezone aware datetime.now(utc); datetime.utcnow() is deprecated since 3.12
+
+    Only bites on Python 3.12+, where utcnow() started warning; on the 3.9-3.11 legs of the CI
+    matrix this passes either way.
+    """
+    with warnings.catch_warnings(record=True) as caught_warnings:
+        # "always" never consults the per-module warning registry, so this neither depends on nor
+        # manipulates whether an earlier test already triggered the same warning
+        warnings.simplefilter("always")
+        assert isinstance(get_current_edifact_format_version(), EdifactFormatVersion)
+    assert [w for w in caught_warnings if issubclass(w.category, DeprecationWarning)] == []
+
+
 def test_str_representation() -> None:
     assert str(EdifactFormatVersion.FV2504) == "FV2504"
 
@@ -131,6 +146,18 @@ def test_format_versions_are_declared_in_chronological_order() -> None:
             continue
     assert valid_from_dates == sorted(valid_from_dates)
     assert len(set(valid_from_dates)) == len(valid_from_dates), "two format versions share a start date"
+
+
+def test_thresholds_are_in_chronological_order() -> None:
+    """get_edifact_format_version returns the first threshold the key date falls below.
+
+    That is only the *closest* threshold if the list is ordered, so the order is part of the
+    contract. _format_version_thresholds is sorted at its point of definition; this fails if that
+    sorting is removed and an entry is written out of order.
+    """
+    threshold_dates = [threshold_date for threshold_date, _ in _format_version_thresholds]
+    assert threshold_dates == sorted(threshold_dates)
+    assert len(set(threshold_dates)) == len(threshold_dates), "two format versions share a threshold"
 
 
 def test_latest_format_version_is_the_newest_enum_member() -> None:

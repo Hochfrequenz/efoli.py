@@ -29,7 +29,7 @@ Homepage = "https://github.com/Hochfrequenz/efoli.py"
 
 [dependency-groups]
 coverage = [
-    "coverage==7.15.4; python_version >= '3.10'",
+    "coverage==7.16.0; python_version >= '3.10'",
     {include-group = "tests"}
 ]
 linting = [

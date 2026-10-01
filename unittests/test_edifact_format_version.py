@@ -50,16 +50,10 @@ from efoli.edifact_format_version import _format_version_thresholds, _latest_for
         pytest.param(datetime(2026, 3, 31, 21, 59, 59, tzinfo=timezone.utc), EdifactFormatVersion.FV2510),
         pytest.param(datetime(2026, 3, 31, 22, 0, 0, tzinfo=timezone.utc), EdifactFormatVersion.FV2604),
         pytest.param(datetime(2026, 9, 30, 22, 0, 0, tzinfo=timezone.utc), EdifactFormatVersion.FV2610),
-        pytest.param(datetime(2027, 3, 31, 21, 59, 59, tzinfo=timezone.utc), EdifactFormatVersion.FV2610),
-        pytest.param(datetime(2027, 3, 31, 22, 0, 0, tzinfo=timezone.utc), EdifactFormatVersion.FV2704),
-        # The two params below restate the requirement ("FV2704 starts on 2027-04-01") in local
-        # calendar terms, so that a reader need not redo the MESZ arithmetic. Neither adds mutation
-        # coverage over the two UTC params above: date(2027, 4, 1) localizes to exactly the
-        # 22:00Z threshold, and date(2027, 3, 31) localizes a full day below it, well inside the
-        # range the 21:59:59Z param already pins. While every threshold sits at Berlin midnight,
-        # no date-only param can be load-bearing.
-        pytest.param(date(2027, 3, 31), EdifactFormatVersion.FV2610, id="last day of FV2610 (date)"),
-        pytest.param(date(2027, 4, 1), EdifactFormatVersion.FV2704, id="first day of FV2704 (date)"),
+        # There is no FV2704. FV2610 is the newest known format version and therefore applies to every
+        # key date from 2026-10-01 onwards, including 2027-04-01 and later.
+        pytest.param(datetime(2027, 3, 31, 22, 0, 0, tzinfo=timezone.utc), EdifactFormatVersion.FV2610),
+        pytest.param(date(2027, 4, 1), EdifactFormatVersion.FV2610, id="2027-04-01 (date), no FV2704"),
     ],
 )
 def test_format_version_from_keydate(key_date: datetime, expected_result: EdifactFormatVersion) -> None:
@@ -129,7 +123,6 @@ def test_str_representation() -> None:
         pytest.param(EdifactFormatVersion.FV2510, date(2025, 10, 1), id="FV2510"),
         pytest.param(EdifactFormatVersion.FV2604, date(2026, 4, 1), id="FV2604"),
         pytest.param(EdifactFormatVersion.FV2610, date(2026, 10, 1), id="FV2610"),
-        pytest.param(EdifactFormatVersion.FV2704, date(2027, 4, 1), id="FV2704"),
     ],
 )
 def test_format_version_valid_from(version: EdifactFormatVersion, expected_date: date) -> None:
@@ -194,3 +187,11 @@ def test_all_format_versions_except_first_have_valid_from() -> None:
     # First FV has no start date
     with pytest.raises(KeyError):
         get_edifact_format_version_valid_from(first_fv)
+
+
+def test_there_is_no_fv2704() -> None:
+    """FV2704 was added by mistake (no format version starts on 2027-04-01) and removed again."""
+    assert "FV2704" not in EdifactFormatVersion.__members__
+    assert "FV2704" not in {version.value for version in EdifactFormatVersion}
+    with pytest.raises(ValueError):
+        EdifactFormatVersion("FV2704")

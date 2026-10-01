@@ -27,7 +27,6 @@ class EdifactFormatVersion(StrEnum):
     FV2510 = "FV2510"  #: valid from 2025-10-01 onwards
     FV2604 = "FV2604"  #: valid from 2026-04-01 onwards
     FV2610 = "FV2610"  #: valid from 2026-10-01 onwards
-    FV2704 = "FV2704"  #: valid from 2027-04-01 onwards
     # Whenever you add another value here, add the upper threshold of its *predecessor* to
     # _format_version_thresholds below. The values have to stay in chronological order;
     # test_format_versions_are_declared_in_chronological_order guards that.
@@ -55,8 +54,6 @@ _format_version_thresholds: list[tuple[datetime.datetime, EdifactFormatVersion]]
         (datetime.datetime(2025, 9, 30, 22, 0, 0, 0, tzinfo=_utc), EdifactFormatVersion.FV2504),
         (datetime.datetime(2026, 3, 31, 22, 0, 0, 0, tzinfo=_utc), EdifactFormatVersion.FV2510),
         (datetime.datetime(2026, 9, 30, 22, 0, 0, 0, tzinfo=_utc), EdifactFormatVersion.FV2604),
-        # 2027-04-01T00:00+02:00 (MESZ; German DST starts 2027-03-28) == 2027-03-31T22:00Z
-        (datetime.datetime(2027, 3, 31, 22, 0, 0, 0, tzinfo=_utc), EdifactFormatVersion.FV2610),
     ],
     key=lambda threshold: threshold[0],
 )

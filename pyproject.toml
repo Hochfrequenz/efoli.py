@@ -44,7 +44,7 @@ tests = [
 ]
 type_check = [
     "mypy==2.4.0; python_version >= '3.10'",
-    "types-pytz==2026.5.0.20261006; python_version >= '3.10'",
+    "types-pytz==2026.6.0.20261031; python_version >= '3.10'",
     {include-group = "tests"}
 ]
 dev = [
